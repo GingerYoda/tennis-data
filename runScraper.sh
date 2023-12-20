@@ -1,5 +1,6 @@
 #! /usr/bin/bash
 
+cd /home/ospe/repos/tennis-data/
 CURRENT_DATE=$(date +"%Y-%m-%d")
 TARGET_FILE="./data/$CURRENT_DATE"
 
