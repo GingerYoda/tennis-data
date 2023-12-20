@@ -27,8 +27,6 @@ chrome_options.add_argument("--headless")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disabled-dev-shm-usage")
 
-currentTime = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-print(f"Current time is {currentTime}.")
 webdriver_service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
 driver.get(URL)
@@ -43,7 +41,6 @@ driver.find_element(By.XPATH, CALENDAR_BUTTON_XPATH).click()
 dateDict = {}
 while currentDateString != previousDate:
     currentDateDict = {}
-    print(f"Current Date is: {currentDateString}")
 
     # This has to be fast as the page pings the server every couple seconds and messes up the selectors.
     try:
@@ -75,15 +72,15 @@ while currentDateString != previousDate:
 driver.quit()
 
 # A bit of cleaning must be done here.
-print(f"Stopping at {currentDateString}.")
 cleanBatchData = {}
 for date, courts in dateDict.items():
     cleanedCourtData = {court: cleanData(freeTimes) for court, freeTimes in courts.items()}
     cleanBatchData[date] = cleanedCourtData
 
-today = datetime.date.today()
-print(today)
-file_path = f'./data/{today}/date={currentTime}.json'
+currentTime = datetime.datetime.now()
+cleanBatchData["time"] = currentTime.strftime("%Y-%m-%d %H:%M:%S")
+today = currentTime.strftime("%Y-%m-%d")
+file_path = f'./data/{today}/{currentTime.strftime("%Y%m%d_%H%M%S")}.json'
 
 with open(file_path, 'w') as json_file:
     json.dump(cleanBatchData, json_file, indent=2)
