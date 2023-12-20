@@ -5,7 +5,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import StaleElementReferenceException, NoSuchElementException
 from time import sleep, time
-from datetime import datetime
+import datetime
 import json
 
 
@@ -27,7 +27,7 @@ chrome_options.add_argument("--headless")
 chrome_options.add_argument("--no-sandbox")
 chrome_options.add_argument("--disabled-dev-shm-usage")
 
-currentTime = datetime.now()
+currentTime = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 print(f"Current time is {currentTime}.")
 webdriver_service = Service(ChromeDriverManager().install())
 driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
@@ -46,23 +46,24 @@ while currentDateString != previousDate:
     print(f"Current Date is: {currentDateString}")
 
     # This has to be fast as the page pings the server every couple seconds and messes up the selectors.
-    tableRows = driver \
-        .find_element(By.TAG_NAME, "tbody") \
-        .find_elements(By.TAG_NAME, "tr")
-    if len(tableRows) > 0:
-        for row in tableRows:
-            # Handle days without any free courts.
-            try:
-                court = row.find_element(By.TAG_NAME, "th").text
-            except(StaleElementReferenceException, NoSuchElementException): 
-                break
-            halves = row.find_elements(By.XPATH, "./td[contains(@style, 'background: repeating-linear-gradient')]")
-            halvesAsString = " ".join(f"{half.text}" for half in halves)
-            currentDateDict[court] = (row.text, halvesAsString)
-    else:
-        # TODO: Log error and terminate.
-        print("Error")
-        exit()
+    try:
+        tableRows = driver \
+            .find_element(By.TAG_NAME, "tbody") \
+            .find_elements(By.TAG_NAME, "tr")
+        if len(tableRows) > 0:
+            for row in tableRows:
+                # Handle days without any free courts.
+                try:
+                    court = row.find_element(By.TAG_NAME, "th").text
+                except (StaleElementReferenceException, NoSuchElementException):
+                    break
+                halves = row.find_elements(By.XPATH, "./td[contains(@style, 'background: repeating-linear-gradient')]")
+                halvesAsString = " ".join(f"{half.text}" for half in halves)
+                currentDateDict[court] = (row.text, halvesAsString)
+
+    except (NoSuchElementException):
+        # TODO: Log error and move on.
+        print("No free courts.")
 
     dateDict[currentDateString] = currentDateDict
     driver.find_element(By.XPATH, NEXT_DAY_X_PATH).click()
@@ -80,18 +81,10 @@ for date, courts in dateDict.items():
     cleanedCourtData = {court: cleanData(freeTimes) for court, freeTimes in courts.items()}
     cleanBatchData[date] = cleanedCourtData
 
-# for k, v in cleanBatchData.items():
-#     print(k)
-#     for c, t in v.items():
-#         print(f"----{c}")
-#         print(f"--------Allcourts: {t[0]}")
-#         if len(t[1]) > 0:
-#             print(f"--------Half an hour: {t[1]}")
+today = datetime.date.today()
+print(today)
+file_path = f'./data/{today}/date={currentTime}.json'
 
-# Specify the file path
-file_path = 'output.json'
-
-# Write the data to the JSON file
 with open(file_path, 'w') as json_file:
     json.dump(cleanBatchData, json_file, indent=2)
 
