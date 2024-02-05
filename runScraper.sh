@@ -9,5 +9,5 @@ if [ ! -d "$TARGET_FILE" ]; then
 fi
 
 source ./venv/bin/activate
-python ./tennisBuddy.py
+python ./tennisScraper.py
 deactivate
