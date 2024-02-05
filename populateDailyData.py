@@ -7,7 +7,7 @@ import sqlite3
 This script checks if the court is free 15 minutes before the time slots starts. If slot is free saves the information
 to a db.
 """
-date = '2023-12-20'
+date = sys.argv[1]
 
 data = []
 with open(f'./data/merged_files/{date}.json', 'r') as json_file:
@@ -20,9 +20,14 @@ with open(f'./data/merged_files/{date}.json', 'r') as json_file:
         date_data = json_object[date]
         for k,v in date_data.items():
             for free_time in v[0]:
-                time_obj = time.fromisoformat(free_time)
+                if len(free_time) < 5:
+                    time_obj = time.fromisoformat('0' + free_time)
+                    
+                else:
+                    time_obj = time.fromisoformat(free_time)
                 if time_obj < reference_time:
                     data.append((k[1:], date, time_obj.strftime('%H:%M')))
+
 if len(data) > 0:
     db_connection = sqlite3.connect("tennisData.db")
     db_cursor = db_connection.cursor()
